@@ -27,14 +27,7 @@ There are at least two choices:
 
 ## Types are generated from JSON Schema
 
-You can run `pnpm gen:types:planet` which will effectively run this:
-
-```bash
-curl https://swapi.info/api/planets/schema \
-| pnpx json-schema-to-valibot -t --name Planet \
-| pnpx prettier --parser typescript \
-> types/planet.ts
-```
+You can run `pnpm gen:types`, see more in [types/README](./types/README.md)
 
 ## Developer guidelines
 
