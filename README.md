@@ -4,7 +4,7 @@
 
 Purpose of this project is to show skills with React, TypeScript and Next.js.
 
-### Globa State Management
+### Global State Management
 
 This project is using pure React Context API for demonstration purposes.
 
@@ -25,11 +25,13 @@ There are at least two choices:
     [#37](https://github.com/Juriy/swapi/issues/37),
     [⎇66](https://github.com/Juriy/swapi/pull/66)
 
-## SWAPI Types from JSON Schema
+## SWAPI Types from JSON Schema and data sample
 
-You can automatically generate schemas and types from OpenAPI.
-Run `pnpm gen:swapi` command which will write schemas with inferred types using
-[valibot](https://valibot.dev/) library.
+You can automatically generate stuff from OpenAPI and data endpoint.
+
+- `pnpm gen:swapi:schema` - write schemas with inferred types using [valibot](https://valibot.dev/) library.
+- `pnpm gen:swapi:sample` - fetch sample data from entire swapi.info
+- `pnpm gen:swapi` - do both of the above
 
 ## Developer guidelines
 
