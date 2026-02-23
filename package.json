@@ -2,13 +2,14 @@
   "name": "cbdata-swapi-planets",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "gen:types": "pnpm gen:types:planet",
-    "gen:types:planet": "curl https://swapi.info/api/planets/schema | pnpx json-schema-to-valibot -t --name Planet | pnpx prettier --parser typescript > types/planet.ts"
+    "gen": "pnpm run gen:swapi",
+    "gen:swapi": "node scripts/gen-swapi-schema.ts"
   },
   "dependencies": {
     "next": "16.1.6",
@@ -23,6 +24,8 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "json-schema-to-valibot": "^0.3.0",
+    "prettier": "^3.8.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

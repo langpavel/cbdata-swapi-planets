@@ -25,9 +25,11 @@ There are at least two choices:
     [#37](https://github.com/Juriy/swapi/issues/37),
     [⎇66](https://github.com/Juriy/swapi/pull/66)
 
-## Types are generated from JSON Schema
+## SWAPI Types from JSON Schema
 
-You can run `pnpm gen:types`, see more in [types/README](./types/README.md)
+You can automatically generate schemas and types from OpenAPI.
+Run `pnpm gen:swapi` command which will write schemas with inferred types using
+[valibot](https://valibot.dev/) library.
 
 ## Developer guidelines
 

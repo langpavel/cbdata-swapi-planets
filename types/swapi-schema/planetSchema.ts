@@ -1,6 +1,11 @@
+/**
+ * This file is auto-generated. Do not edit manually.
+ * Run `pnpm gen:swapi` to regenerate the schema.
+ */
+
 import * as v from "valibot";
 
-export const Planet = v.object({
+export const planetSchema = v.object({
   name: v.string(),
   rotation_period: v.string(),
   orbital_period: v.string(),
@@ -17,19 +22,7 @@ export const Planet = v.object({
   url: v.string(),
 });
 
-export type PlanetType = {
-  name: string;
-  rotation_period: string;
-  orbital_period: string;
-  diameter: string;
-  climate: string;
-  gravity: string;
-  terrain: string;
-  surface_water: string;
-  population: string;
-  residents: string[];
-  films: string[];
-  created: string;
-  edited: string;
-  url: string;
-};
+/**
+ * See https://swapi.info/api/planets/schema for the original JSON schema definition.
+ */
+export type Planet = v.InferOutput<typeof planetSchema>;
