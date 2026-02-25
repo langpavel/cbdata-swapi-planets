@@ -123,6 +123,8 @@ Use `createStoreProvider` when:
 - TypeScript inference matters more to you than runtime safety nets like Immer.
 - You **don't need** middleware, devtools, RTK Query, or normalized entity management.
 
+> **SSR note:** `useSelector` passes `initialState` as the server snapshot to `useSyncExternalStore`. This means SSR always renders the initial state; any actions dispatched before rendering are not reflected on the server. SSR/hydration support is currently an open question for this library — consider `react-redux` if you need server-to-client state transfer.
+
 Use `react-redux` + RTK when:
 
 - The app has **complex async flows** (API caching, optimistic updates, polling).
