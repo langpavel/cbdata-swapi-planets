@@ -1,43 +1,51 @@
 # createStoreProvider
 
-A single-file, zero-dependency, Redux-inspired state management micro-library for React 18+.
+A scholarly, single-file implementation of Redux-style state islands for React 18+. Uses `useSyncExternalStore` under the hood. Each call produces an isolated store with its own `Provider`, `useSelector`, `useDispatch`, and `getState`.
 
-`createStoreProvider` gives you the familiar `useSelector` / `useDispatch` API in **~60 lines of core logic (plus comments and docs)**, backed entirely by React's built-in `useSyncExternalStore`. No middleware layer, no devtools protocol, no selector memoization library — just the reducer pattern wired up to a subscription model.
+Not a Redux replacement — a minimal study of the pattern.
 
 ## API
 
-### `createStoreProvider<S, A>(reducer, initialState): StoreProvider<S, A>`
+### `Action`
 
-Creates an independent store instance. Each call returns its own isolated provider and hooks — there is no global store.
+```ts
+type Action = { readonly type: string };
+```
+
+Base constraint for all action types. Actions must carry a string `type` discriminant.
+
+### `Reducer<S, A extends Action>`
+
+```ts
+type Reducer<S, A extends Action> = (
+  state: Readonly<S>,
+  action: A,
+) => Readonly<S>;
+```
+
+Pure `(state, action) => state` function. No mutations, no side effects.
+
+### `createStoreProvider<S, A extends Action>(reducer, initialState)`
 
 | Parameter      | Type            | Description                               |
 | -------------- | --------------- | ----------------------------------------- |
 | `reducer`      | `Reducer<S, A>` | Pure `(state, action) => state` function. |
 | `initialState` | `S`             | The initial state value.                  |
 
-Returns a `StoreProvider<S, A>` with:
+Returns a `StoreProvider<S, A>`:
 
 | Member        | Type                              | Description                                                                |
 | ------------- | --------------------------------- | -------------------------------------------------------------------------- |
 | `Provider`    | `FC<{ children: ReactNode }>`     | Wrap your tree to enable the hooks below.                                  |
 | `useSelector` | `<T>(selector: (s: S) => T) => T` | Derives a value from state; re-renders only on reference-equality changes. |
 | `useDispatch` | `() => (action: A) => void`       | Returns a stable dispatch function.                                        |
-| `getState`    | `() => S`                         | Read current state outside React (tests, event handlers, etc.).            |
-
-### `Reducer<S, A>`
-
-```ts
-type Reducer<S, A> = (state: S, action: A) => S;
-```
-
-Identical in shape to a Redux reducer. Must be pure — no mutations, no side effects.
+| `getState`    | `() => Readonly<S>`               | Read current state outside React (tests, event handlers, etc.).            |
 
 ## Usage
 
 ```tsx
 import { createStoreProvider, type Reducer } from "./createStoreProvider";
 
-// 1. Define state & actions
 type State = { count: number };
 type Action = { type: "increment" } | { type: "reset" };
 
@@ -50,12 +58,10 @@ const reducer: Reducer<State, Action> = (state, action) => {
   }
 };
 
-// 2. Create the store
 const { Provider, useSelector, useDispatch } = createStoreProvider(reducer, {
   count: 0,
 });
 
-// 3. Consume it
 function Counter() {
   const count = useSelector((s) => s.count);
   const dispatch = useDispatch();
@@ -77,60 +83,18 @@ function App() {
 }
 ```
 
-## Redux Inspiration
+## Relationship to Redux
 
-This micro-store is a **direct descendant** of the Redux/react-redux design philosophy. It deliberately preserves:
+This is a distilled implementation of the Redux pattern — `(state, action) => state`, unidirectional data flow, `useSelector` / `useDispatch` hooks, context-based `<Provider>`.
 
-- **The reducer contract** — `(state, action) => state`, pure and predictable.
-- **Hook naming** — `useSelector` and `useDispatch`, identical to react-redux.
-- **Unidirectional data flow** — dispatch → reducer → new state → subscribers notified.
-- **Provider pattern** — a context-based `<Provider>` gates access to hooks.
+What it intentionally omits:
 
-What it intentionally drops:
+- Action creators, `createSlice`, RTK — actions are plain discriminated unions.
+- Middleware — no thunks, sagas, or epics. Side effects live outside the store.
+- Selector memoization — relies on `useSyncExternalStore`'s reference equality.
+- DevTools — state is inspectable via `getState()`.
+- `combineReducers` — single reducer, single state tree.
 
-- **Action creators & `createSlice`** — define actions as plain union types. TypeScript discriminated unions replace the need for builder-pattern boilerplate.
-- **Middleware pipeline** — no `applyMiddleware`, no thunks, no sagas, no epics. Side effects live outside the store (in components, hooks, or plain functions).
-- **Selector memoization (reselect)** — `useSelector` relies on `useSyncExternalStore`'s built-in reference equality check. If you need derived computations, compose with `useMemo` yourself.
-- **DevTools integration** — no `__REDUX_DEVTOOLS_EXTENSION__` support. State is inspectable via `getState()` and standard React DevTools.
-- **`combineReducers`** — single reducer, single state tree. Compose reducers manually if needed.
-- **`configureStore` / `RTK`** — there is no toolkit layer. The 60-line file _is_ the toolkit.
+For devtools, middleware, async patterns, memoization, SSR/hydration, data fetching, or large-scale state management, use `react-redux` + RTK.
 
-The mental model is "what if Redux shipped as one function instead of a framework."
-
-## Pros & Cons vs `react-redux` (with `@reduxjs/toolkit`)
-
-An honest comparison, treating `createStoreProvider` as a standalone package competing against the full react-redux + RTK stack (v9.x / RTK 2.x, circa 2025–2026).
-
-### Use `react-redux` if you wish more of
-
-- Devtools
-- Middleware
-- Async patterns
-- Memoization
-- Ecosystem
-- SSR / hydration
-- Data fetching
-- Scalability
-- Community support
-
-## When to Use This
-
-Use `createStoreProvider` when:
-
-- The state is **small-to-medium** and the reducer is straightforward.
-- You want **zero added dependencies** and the smallest possible footprint.
-- You need **multiple isolated stores** without fighting the framework.
-- TypeScript inference matters more to you than runtime safety nets like Immer.
-- You **don't need** middleware, devtools, RTK Query, or normalized entity management.
-
-> **SSR note:** `useSelector` passes `initialState` as the server snapshot to `useSyncExternalStore`. This means SSR always renders the initial state; any actions dispatched before rendering are not reflected on the server. SSR/hydration support is currently an open question for this library — consider `react-redux` if you need server-to-client state transfer.
-
-Use `react-redux` + RTK when:
-
-- The app has **complex async flows** (API caching, optimistic updates, polling).
-- You need **Redux DevTools** for debugging state transitions.
-- **Selector memoization** is critical for performance in large state trees.
-- The team expects a **well-documented, community-supported** solution with established patterns.
-- You're building at a scale where battle-tested infrastructure matters more than bundle size.
-
-This is not a replacement for Redux. It's what Redux would look like if your requirements fit in 60 lines.
+> **SSR note:** `useSelector` passes `initialState` as the server snapshot to `useSyncExternalStore`, so SSR always renders the initial state. Actions dispatched before rendering are not reflected server-side.

@@ -7,72 +7,46 @@ import {
 } from "react";
 
 /**
- * A pure function that takes the current state and an action, and returns
- * the next state. Follows the same contract as a Redux reducer.
- *
- * Must be a pure function — no side effects, no mutations of the previous state.
- *
- * @typeParam S - The state shape.
- * @typeParam A - The action type (typically a discriminated union).
+ * Action in redux-style store. Must have a string `type` property.
  */
-export type Reducer<S, A> = (state: S, action: A) => S;
+export type Action = { readonly type: string };
+
+/** Pure `(state, action) => state` function. No side effects, no mutations. */
+export type Reducer<S, A extends Action> = (
+  state: Readonly<S>,
+  action: A,
+) => Readonly<S>;
 
 /**
- * The return value of {@link createStoreProvider}. Contains everything needed
- * to provide and consume a store in a React tree.
+ * Return value of {@link createStoreProvider}.
  *
- * @typeParam S - The state shape.
- * @typeParam A - The action type.
+ * @typeParam S - State shape.
+ * @typeParam A - Action type.
  */
 export type StoreProvider<S, A> = {
-  /**
-   * React component that makes the store available to descendant hooks.
-   * Wrap your component tree (or a subtree) with this provider.
-   */
+  /** Wrap your component tree with this to make the store available. */
   Provider: FC<{ children: ReactNode }>;
 
   /**
-   * Hook that derives a value from the store state.
-   * Re-renders the consuming component only when the selected value changes
-   * (reference equality via [`useSyncExternalStore`](https://react.dev/reference/react/useSyncExternalStore)).
-   *
-   * @typeParam T - The derived value type.
-   * @param selector - Pure function that extracts a value from state.
-   * @returns The selected value.
+   * Derives a value from state. Re-renders only when the selected value changes.
    * @throws If called outside of `<Provider>`.
    */
   useSelector: <T>(selector: (state: S) => T) => T;
 
   /**
-   * Hook that returns the dispatch function.
-   *
-   * @returns A stable `dispatch` function that accepts an action.
+   * Returns the stable dispatch function.
    * @throws If called outside of `<Provider>`.
    */
   useDispatch: () => (action: A) => void;
 
-  /**
-   * Returns the current state snapshot outside of React (e.g. in tests,
-   * middleware-like logic, or event handlers that don't need reactivity).
-   *
-   * @returns The current state.
-   */
-  getState: () => S;
+  /** Returns the current state snapshot outside of React. */
+  getState: () => Readonly<S>;
 };
 
 /**
- * Creates a self-contained Redux-style store backed by [`useSyncExternalStore`](https://react.dev/reference/react/useSyncExternalStore).
- *
- * Each call produces an independent store instance with its own `Provider`,
- * `useSelector`, `useDispatch`, and `getState` — no global singletons, no
- * external dependencies beyond React 18+.
- *
- * @typeParam S - The state shape.
- * @typeParam A - The action type (typically a discriminated union).
- *
- * @param reducer - A pure `(state, action) => state` function.
- * @param initialState - The initial state value supplied to the store.
- * @returns A {@link StoreProvider} object containing the Provider component and hooks.
+ * Creates a self-contained Redux-style store backed by
+ * [`useSyncExternalStore`](https://react.dev/reference/react/useSyncExternalStore).
+ * No global singletons, no external dependencies beyond React 18+.
  *
  * @example
  * ```tsx
@@ -103,29 +77,24 @@ export type StoreProvider<S, A> = {
  * }
  * ```
  */
-export const createStoreProvider = <S, A>(
+export const createStoreProvider = <S, A extends Action>(
   reducer: Reducer<S, A>,
   initialState: S,
 ): StoreProvider<S, A> => {
-  /** Mutable state reference — updated synchronously on every dispatch. */
+  // Current state — replaced (never mutated) on each dispatch.
   let state = initialState;
 
-  /** Active subscriber callbacks, notified after each state transition. */
   const listeners = new Set<() => void>();
 
   const getState = () => state;
 
-  /** Runs the reducer, replaces state, and notifies all subscribers. */
+  const notify = () => listeners.forEach((fn) => fn());
+
   const dispatch = (action: A) => {
     state = reducer(state, action);
-    listeners.forEach((listener) => listener());
+    notify();
   };
 
-  /**
-   * Subscribes a listener to state changes.
-   * Returns an unsubscribe function — the contract expected by
-   * `useSyncExternalStore`.
-   */
   const subscribe = (listener: () => void) => {
     listeners.add(listener);
     return () => {
@@ -133,24 +102,20 @@ export const createStoreProvider = <S, A>(
     };
   };
 
-  /**
-   * Context-based guard that ensures hooks are only called inside
-   * `<Provider>`. Value is `true` when provided, `null` otherwise.
-   */
-  const Guard = createContext<true | null>(null);
+  // Sentinel context — present when rendered inside `<Provider>`, null otherwise.
+  const ProviderContext = createContext<true | null>(null);
 
-  /** @throws Error if the calling hook is rendered outside `<Provider>`. */
   const useGuard = () => {
-    if (useContext(Guard) === null) {
+    if (useContext(ProviderContext) === null) {
       throw new Error("Store hooks must be used within their Provider");
     }
   };
 
   const Provider: FC<{ children: ReactNode }> = ({ children }) => (
-    <Guard.Provider value={true}>{children}</Guard.Provider>
+    <ProviderContext.Provider value={true}>{children}</ProviderContext.Provider>
   );
 
-  const useSelector = <T,>(selector: (state: S) => T): T => {
+  const useSelector = <T,>(selector: (state: Readonly<S>) => T): T => {
     useGuard();
     return useSyncExternalStore(
       subscribe,
@@ -161,6 +126,8 @@ export const createStoreProvider = <S, A>(
 
   const useDispatch = () => {
     useGuard();
+    // dispatch is stable for the lifetime of the store — closure guarantees
+    // referential stability without needing useCallback.
     return dispatch;
   };
 
