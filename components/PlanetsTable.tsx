@@ -8,13 +8,13 @@ import { Tag } from "./Tag";
 export default function PlanetsTable() {
   const planets = useSwapiResource(PlanetsResource);
 
-  if (planets.state === "loading" && !planets.data) {
+  if ((planets.state === "loading" || planets.state === "stale") && !planets.data) {
     return <p>⏳ Loading planets…</p>;
   }
   if (planets.state === "error") {
     return <p>❌ Error: {planets.error?.message}</p>;
   }
-  if (!planets.data) return <p>🤔 No planets found?</p>;
+  if (planets.state === "success" && !planets.data) return <p>🤔 No planets found?</p>;
 
   return (
     <div>
