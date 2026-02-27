@@ -2,12 +2,15 @@
 
 import { useSwapiResource } from "@/lib/swapi/createSwapiStore";
 import { PlanetsResource } from "@/lib/swapi/resources";
+import { useHighlight } from "@/lib/useHighlight";
 
 import { Tag } from "./Tag";
 import { TableLoadingState } from "./TableLoadingState";
 
 export default function PlanetsTable() {
   const planets = useSwapiResource(PlanetsResource);
+
+  const ref = useHighlight("es", [planets.data]);
 
   return (
     <div>
@@ -35,7 +38,7 @@ export default function PlanetsTable() {
             <th scope="col" className="p-2">Gravity</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody ref={ref}>
           {planets.data?.map((planet) => (
             <tr
               key={planet.url}
