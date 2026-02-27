@@ -25,7 +25,7 @@ export default function PlanetsTable() {
       </div>
 
       <table className="w-full border-collapse text-sm">
-        <thead>
+        <thead className="sticky top-0 bg-background/90 backdrop-blur-sm">
           <tr className="border-b border-foreground/20 text-left">
             <th scope="col" className="p-2">Name</th>
             <th scope="col" className="p-2">Climate</th>
@@ -37,7 +37,10 @@ export default function PlanetsTable() {
         </thead>
         <tbody>
           {planets.data?.map((planet) => (
-            <tr key={planet.url} className="border-b border-foreground/10">
+            <tr
+              key={planet.url}
+              className="border-b border-foreground/10 hover:bg-foreground/5"
+            >
               <td className="p-2 font-medium">{planet.name}</td>
               <td className="p-2">
                 {planet.climate.map((climate) => (
