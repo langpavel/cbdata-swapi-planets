@@ -3,17 +3,9 @@
 import { useSwapiResource } from "@/lib/swapi/createSwapiStore";
 import { PlanetsResource } from "@/lib/swapi/resources";
 
-import { Tag } from "./Tag";
-import { TableLoadingState } from "./TableLoadingState";
-
-function MixedCell({ value }: { value: number | string }) {
-  const isNumber = typeof value === "number";
-  return (
-    <td className={`p-2 tabular-nums${isNumber ? " text-right" : ""}`}>
-      {isNumber ? value.toLocaleString() : value}
-    </td>
-  );
-}
+import { Tag } from "../Tag";
+import { TableLoadingState } from "../TableLoadingState";
+import { MixedCell } from "./MixedCell";
 
 export default function PlanetsTable() {
   const planets = useSwapiResource(PlanetsResource);
@@ -39,8 +31,8 @@ export default function PlanetsTable() {
             <th scope="col" className="p-2">Name</th>
             <th scope="col" className="p-2">Climate</th>
             <th scope="col" className="p-2">Terrain</th>
-            <th scope="col" className="p-2">Population</th>
-            <th scope="col" className="p-2">Diameter</th>
+            <th scope="col" className="p-2 text-center">Population</th>
+            <th scope="col" className="p-2 text-center">Diameter</th>
             <th scope="col" className="p-2">Gravity</th>
           </tr>
         </thead>
