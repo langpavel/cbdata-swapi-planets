@@ -15,7 +15,7 @@ export default function PlanetsTable() {
       <div className="flex items-center gap-2 px-2">
         <button
           className="font-bold rounded bg-foreground/10 px-2 py-1 hover:bg-foreground/20"
-          onClick={() => planets.refetch(true)}
+          onClick={() => planets.refetch()}
         >
           Refresh
         </button>

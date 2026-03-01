@@ -38,6 +38,16 @@ export type FetchStore = {
       ...args: Args
     ): UseResourceResult<T>;
   };
+
+  /**
+   * Seeds the store with already-parsed data for a given URL.
+   * Called during render (e.g. by a hydrator component) so data is available
+   * for `useSyncExternalStore` during SSR and client hydration.
+   *
+   * Only writes when the entry is absent or stale — never overwrites fresh data.
+   * Does **not** notify subscribers (safe to call in the render phase).
+   */
+  preloadEntry: (url: string, data: unknown) => void;
 };
 
 // ---------------------------------------------------------------------------
@@ -165,12 +175,30 @@ export const createFetchStore = (): FetchStore => {
     ResourceAction
   >(reducer, {});
 
+  /**
+   * Directly seeds the store with parsed data for a URL.
+   * Only writes when the entry is absent or stale — never overwrites fresh data.
+   * Safe to call during render (no subscribers exist yet during SSR/hydration).
+   */
+  const preloadEntry = (url: string, data: unknown): void => {
+    const entry = getState()[url];
+    if (!entry || entry.state === "stale") {
+      dispatch({ type: "FETCH_SUCCESS", url, data });
+    }
+  };
+
   const startFetch = async (
     url: string,
     parse: (raw: unknown) => unknown,
     dispatch: (action: ResourceAction) => void,
     force: boolean = false,
   ): Promise<void> => {
+    // Skip when data was already loaded (e.g. preloaded from SSR) unless forced.
+    const current = getState()[url];
+    if (!force && current?.state === "success") {
+      return;
+    }
+
     dispatch({ type: "FETCH_REQUEST", url });
     const entry = getState()[url] as InternalResourceItem;
     const meta = ensureMeta(entry);
@@ -254,7 +282,7 @@ export const createFetchStore = (): FetchStore => {
       typeof def.url === "function" ? def.url(...args) : def.url;
 
     const refetch = useCallback(
-      (force: boolean = false) => {
+      (force: boolean = true) => {
         if (resolvedUrl === null) return;
         startFetch(resolvedUrl, def.parse, dispatch, force);
       },
@@ -273,5 +301,5 @@ export const createFetchStore = (): FetchStore => {
     return { ...(item ?? (STALE_ITEM as ResourceItem<T>)), refetch };
   }
 
-  return { FetchProvider: Provider, useResource };
+  return { FetchProvider: Provider, useResource, preloadEntry };
 };
