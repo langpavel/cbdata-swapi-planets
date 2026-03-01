@@ -14,6 +14,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint",
+    "check": "pnpm run lint && pnpm run check:types && pnpm run test",
+    "check:types": "tsc --noEmit",
     "gen": "pnpm run gen:swapi && pnpm run cf-typegen",
     "gen:swapi": "pnpm run gen:swapi:schema && pnpm run gen:swapi:sample",
     "gen:swapi:schema": "node scripts/gen-swapi-schema.ts",
