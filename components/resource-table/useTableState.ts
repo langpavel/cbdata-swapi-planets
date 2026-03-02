@@ -17,7 +17,10 @@ export type ColumnVisibility<T extends Record<string, unknown>> = {
 export type TableState<T extends Record<string, unknown>> = {
   /** Visible columns in their current display order. */
   readonly visibleColumns: ColumnDef<T>[];
-  /** All columns with their visibility flag (for future settings UI). */
+  /**
+   * All columns with their visibility flag.
+   * @reserved For a future column-visibility panel — not yet wired into `ResourceTable`.
+   */
   readonly allColumns: ColumnVisibility<T>[];
   /** Active multi-column sort chain. */
   readonly sortEntries: SortEntry[];
@@ -26,9 +29,15 @@ export type TableState<T extends Record<string, unknown>> = {
 
   // — Mutators —
 
-  /** Toggle a column's visibility on/off. */
+  /**
+   * Toggle a column's visibility on/off.
+   * @reserved For a future column-visibility panel — not yet wired into `ResourceTable`.
+   */
   readonly toggleColumn: (columnId: string) => void;
-  /** Replace the full column order (array of visible IDs). Pass `null` to reset to default. */
+  /**
+   * Replace the full column order (array of visible IDs). Pass `null` to reset to default.
+   * @reserved For a future column-order UI — not yet wired into `ResourceTable`.
+   */
   readonly setColumnOrder: (orderedIds: string[] | null) => void;
   /**
    * Toggle sorting on a column.
@@ -37,7 +46,10 @@ export type TableState<T extends Record<string, unknown>> = {
    * - `multi=true`: adds/cycles/removes this column within the sort chain.
    */
   readonly toggleSort: (columnId: string, multi?: boolean) => void;
-  /** Remove all sort entries. */
+  /**
+   * Remove all sort entries.
+   * @reserved For a future "clear sort" UI control — not yet wired into `ResourceTable`.
+   */
   readonly clearSort: () => void;
 };
 
@@ -46,10 +58,10 @@ export type TableState<T extends Record<string, unknown>> = {
 // ---------------------------------------------------------------------------
 
 /**
- * Manages column visibility, order, and sort state via `localStorage`.
+ * Manages column visibility, order, and sort state for `ResourceTable`.
  *
- * Uses `useSyncExternalStore` so the server snapshot returns `null`
- * (= default columns, no sort), avoiding hydration mismatches.
+ * `visibleIds` starts as `null` (= show all columns in definition order),
+ * avoiding any SSR/hydration mismatch on first render.
  */
 export function useTableState<T extends Record<string, unknown>>(
   columns: readonly ColumnDef<T>[],

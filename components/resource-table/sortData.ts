@@ -1,5 +1,11 @@
 import type { ColumnDef, SortEntry, SortValue } from "./types";
 
+/** Pre-resolved entry used internally during the sort pass. */
+type ResolvedEntry<T> = {
+  getSortValue: (item: T) => SortValue;
+  direction: "asc" | "desc";
+};
+
 /**
  * Compare two `SortValue`s.
  *
@@ -48,20 +54,13 @@ export function sortData<T extends Record<string, unknown>>(
   const resolvedEntries = sortEntries
     .map((entry) => {
       const col = columns.find((c) => c.id === entry.columnId);
-      if (!col || !col.isSortable) return null;
+      if (!col || !col.isSortable || !col.getSortValue) return null;
       return {
         getSortValue: col.getSortValue,
         direction: entry.direction,
       };
     })
-    .filter(
-      (
-        e,
-      ): e is {
-        getSortValue: (item: T) => SortValue;
-        direction: "asc" | "desc";
-      } => e !== null,
-    );
+    .filter((e): e is ResolvedEntry<T> => e !== null);
 
   if (resolvedEntries.length === 0) return data.slice();
 

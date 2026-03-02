@@ -1,10 +1,10 @@
 export type MixedCellProps = {
-  value: number | string | null | undefined;
+  readonly value: number | string | null | undefined;
   /**
    * An optional unit to display after numeric values.
    */
-  numericUnit?: string;
-  className?: string;
+  readonly numericUnit?: string;
+  readonly className?: string;
 };
 
 /**

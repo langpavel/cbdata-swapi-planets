@@ -1,6 +1,6 @@
 export type TextCellProps = {
-  value: string | null | undefined;
-  className?: string;
+  readonly value: string | null | undefined;
+  readonly className?: string;
 };
 
 /**

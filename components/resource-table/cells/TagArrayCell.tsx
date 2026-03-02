@@ -1,8 +1,8 @@
 import { Tag } from "@/components/Tag";
 
 export type TagArrayCellProps = {
-  value: string[] | null | undefined;
-  className?: string;
+  readonly value: string[] | null | undefined;
+  readonly className?: string;
 };
 
 export function TagArrayCell({ value, className }: TagArrayCellProps) {

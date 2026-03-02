@@ -82,10 +82,10 @@ export default function ResourceTable<T extends Record<string, unknown>>({
         <thead className="sticky top-0 bg-background/90 backdrop-blur-sm">
           <tr className="border-b border-foreground/20 text-left">
             {visibleColumns.map((col) => {
-              const sortEntry = sortEntries.find(
+              const sortIndex = sortEntries.findIndex(
                 (e) => e.columnId === col.id,
               );
-              const sortIndex = sortEntry ? sortEntries.indexOf(sortEntry) : -1;
+              const sortEntry = sortIndex >= 0 ? sortEntries[sortIndex] : undefined;
 
               return (
                 <th

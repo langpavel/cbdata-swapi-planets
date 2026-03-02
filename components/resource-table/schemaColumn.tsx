@@ -1,9 +1,7 @@
 import { type ComponentType } from "react";
 
 import type { CellComponentProps, ColumnDef, SortValue } from "./types";
-import { MixedCell } from "./cells/MixedCell";
-import { TagArrayCell } from "./cells/TagArrayCell";
-import { TextCell } from "./cells/TextCell";
+import { MixedCell, TagArrayCell, TextCell } from "./cells";
 
 // ---------------------------------------------------------------------------
 // Column types & type-level constraints
@@ -91,25 +89,6 @@ export type SchemaColumnConfig<
     });
 
 // ---------------------------------------------------------------------------
-// Per-type getSortValue builders
-// ---------------------------------------------------------------------------
-
-function buildTextGetSortValue<TRow extends Record<string, unknown>>(
-  getValue: (row: TRow) => unknown,
-): (row: TRow) => SortValue {
-  return (row: TRow) => getValue(row) as string;
-}
-
-function buildNumericGetSortValue<TRow extends Record<string, unknown>>(
-  getValue: (row: TRow) => unknown,
-): (row: TRow) => SortValue {
-  return (row: TRow) => {
-    const v = getValue(row);
-    return typeof v === "number" ? v : null;
-  };
-}
-
-// ---------------------------------------------------------------------------
 // schemaColumn factory
 // ---------------------------------------------------------------------------
 
@@ -149,9 +128,12 @@ export function schemaColumn<TRow extends Record<string, unknown>>() {
 
     if (type && !getSortValue && isSortable) {
       if (type === "numeric") {
-        getSortValue = buildNumericGetSortValue<TRow>(getValue);
+        getSortValue = (row) => {
+          const v = getValue(row);
+          return typeof v === "number" ? v : null;
+        };
       } else if (type === "text") {
-        getSortValue = buildTextGetSortValue<TRow>(getValue);
+        getSortValue = getValue as (row: TRow) => string;
       }
       // tagArray: no default getSortValue
     }
@@ -170,7 +152,7 @@ export function schemaColumn<TRow extends Record<string, unknown>>() {
 
     return {
       id: key,
-      header: label ?? key,
+      header: label,
       getValue,
       isSortable,
       headerClassName: rest.headerClassName ?? defaults?.headerClassName,
